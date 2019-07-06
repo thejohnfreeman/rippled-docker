@@ -7,7 +7,7 @@ It is unclear whether we can publish this image to Docker Hub based on
 > your existing Visual Studio and Windows licenses. Please don’t share these
 > images on a public Docker hub.
 
-Visual Studio Community Edition is [free][2] for:
+Visual Studio Community is [free][2] for:
 
 - individuals (even for commercial use)
 - open source
@@ -16,16 +16,31 @@ Visual Studio Community Edition is [free][2] for:
 - up to 5 employees of a small business (defined as fewer than 250 employees
   and less than $1 million in annual revenue)
 
-If I am using Visual Studio Community Edition and Visual Studio Build Tools
-under these conditions, am I still prohibited from sharing an image for other
-users under the same conditions? Regardless, it seems I should be able to
-share a Dockerfile [just like Microsoft][11].
+If I am using Visual Studio Community under these conditions, am I still
+prohibited from sharing an image for other users under the same conditions?
+Regardless, it seems I should be able to share a Dockerfile [just like
+Microsoft][11].
 
 This Dockerfile is based off some examples from Microsoft:
 
 - [basic][9]
 - [advanced][10]
 - [`vs-dockerfiles/native-desktop`][12]
+
+Those examples use [Visual Studio Build Tools][13] (VSBT), which is "a
+standalone installer that only lays down the tools required to build C++
+projects without installing the Visual Studio IDE".
+It is a newer installer alongside more traditional installers for Visual Studio
+Community (VSC), Professional, and Enterprise.
+VSBT comes with a number of [components][8], but it is missing the Python and
+Git [components][14] available with the VSC installer.
+On the other hand, VSC has the heavier weight (~1290 MB)
+`Microsoft.VisualStudio.Component.VC.CoreIde` component instead of the lighter
+weight (~350 MB) `Microsoft.VisualStudio.Component.VC.CoreBuildTools` component
+found in VSBT.
+There are alternative ways to install Python and Git (e.g. with [Chocolatey][]
+or [Scoop][]), but I prefer to use a Microsoft installer to guarantee that
+everything works together.
 
 When building the image for yourself, mind the [known issues][3]:
 
@@ -41,8 +56,8 @@ When building the image for yourself, mind the [known issues][3]:
   `C:\ProgramData\Docker\config\daemon.json` to add `"storage-opts":
   ["size=xxxGB"]`.
 
-You can customize which [components][8] the Visual Studio Build Tools
-installer installs. I have chosen these components to build `rippled`:
+You can customize which components the installers install.
+I have chosen these components to build `rippled`:
 
 | Tool | Version | Component |
 | ---- | ------- | --------- |
@@ -51,11 +66,14 @@ installer installs. I have chosen these components to build `rippled`:
 | MSBuild | 16.1 | `Microsoft.Component.MSBuild` |
 | Python | ??? | `Component.CPython3.x64` |
 | Python | ??? | `Component.CPython3.x86` |
-| Visual C++ | ??? | `Microsoft.VisualStudio.Workload.VCTools`  |
+| Visual C++ | ??? | `Microsoft.VisualStudio.Workload.VCTools` |
 
 > **WARNING**: This Dockerfile is a work-in-progress and aspirational. I will
 > fill in the rest of the table as I learn how to install these components and
 > where they are installed.
+
+[Chocolatey]: https://chocolatey.org/
+[Scoop]: https://scoop.sh/
 
 [1]: https://devblogs.microsoft.com/cppblog/using-msvc-in-a-docker-container-for-your-c-projects/
 [2]: https://social.msdn.microsoft.com/Forums/vstudio/en-US/1f5c4e2f-d667-4c37-978b-9112e49142fc/visual-studio-community-edition-commercial-use-and-licensing-headaches
@@ -69,3 +87,5 @@ installer installs. I have chosen these components to build `rippled`:
 [10]: https://docs.microsoft.com/en-us/visualstudio/install/advanced-build-tools-container
 [11]: https://devblogs.microsoft.com/setup/docker-recipes-available-for-visual-studio-build-tools/
 [12]: https://github.com/microsoft/vs-dockerfiles/blob/master/native-desktop/Dockerfile
+[13]: https://devblogs.microsoft.com/cppblog/announcing-visual-c-build-tools-2015-standalone-c-tools-for-build-environments/
+[14]: https://docs.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community
