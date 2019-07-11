@@ -4,6 +4,10 @@ set -o errexit
 set -o nounset
 set -o xtrace
 
+# Parameters
+
+BOOST_VERSION=${BOOST_VERSION:-1.70.0}
+
 # Do not add a stanza to this script without explaining why it is here.
 
 apt-get update
@@ -63,17 +67,18 @@ update-alternatives --install \
 update-alternatives --auto clang
 
 # Download and unpack Boost.
-wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz
-tar xzf boost_1_67_0.tar.gz
-rm boost_1_67_0.tar.gz
+boost_slug="boost_$(echo ${BOOST_VERSION} | tr . _)"
+wget "https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${boost_slug}.tar.gz"
+tar xzf ${boost_slug}.tar.gz
+rm ${boost_slug}.tar.gz
 
 # Build and install Boost.
-cd boost_1_67_0
+cd ${boost_slug}
 # Must name our installation prefix here. The default is `/usr/local`.
 ./bootstrap.sh
 ./b2 -j $(nproc) install
 cd ..
-rm -rf boost_1_67_0
+rm --recursive --force ${boost_slug}
 
 # Clean up.
 apt-get clean
