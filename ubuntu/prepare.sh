@@ -14,16 +14,14 @@ apt-get update
 # Iteratively build the list of packages to install so that we can interleave
 # the lines with comments explaining their inclusion.
 dependencies=''
-# - for adding apt sources for Clang
-dependencies+=' dpkg-dev'
-# - for downloading Boost
-dependencies+=' wget'
+# - for adding apt sources for CMake and Clang
+dependencies+=' curl dpkg-dev apt-transport-https ca-certificates gnupg software-properties-common'
 # - Python headers for Boost.Python
 dependencies+=' libpython-dev'
 # - for downloading rippled and submodules
 dependencies+=' git'
-# - CMake and generators
-dependencies+=' cmake make ninja-build'
+# - CMake generators (but not CMake itself)
+dependencies+=' make ninja-build'
 # - compilers
 dependencies+=' gcc-8 g++-8'
 # - rippled dependencies
@@ -48,6 +46,9 @@ update-alternatives --install \
   /usr/bin/cpp cpp /usr/bin/cpp-8 100
 update-alternatives --auto cpp
 
+# Add source for CMake.
+curl https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key add -
+apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 # Add sources for Clang.
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
 deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main
@@ -55,6 +56,8 @@ deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main
 EOF
 # Enumerate dependencies.
 dependencies=''
+# - CMake
+dependencies+=' cmake'
 # - clang and clang++
 dependencies+=' clang-7'
 # Install Clang.
@@ -68,7 +71,8 @@ update-alternatives --auto clang
 
 # Download and unpack Boost.
 boost_slug="boost_$(echo ${BOOST_VERSION} | tr . _)"
-wget "https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${boost_slug}.tar.gz"
+curl --location --remote-name \
+  "https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${boost_slug}.tar.gz"
 tar xzf ${boost_slug}.tar.gz
 rm ${boost_slug}.tar.gz
 
