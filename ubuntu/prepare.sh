@@ -7,6 +7,10 @@ set -o xtrace
 # Parameters
 
 BOOST_VERSION=${BOOST_VERSION:-1.70.0}
+GCC_VERSION=${GCC_VERSION:-8}
+CLANG_VERSION=${CLANG_VERSION:-10}
+CMAKE_VERSION=${CMAKE_VERSION:-3.17.0}
+DOXYGEN_VERSION=${DOXYGEN_VERSION:-1.8.17}
 
 # Do not add a stanza to this script without explaining why it is here.
 
@@ -14,7 +18,7 @@ apt-get update
 # Iteratively build the list of packages to install so that we can interleave
 # the lines with comments explaining their inclusion.
 dependencies=''
-# - for adding apt sources for CMake and Clang
+# - for adding apt sources for Clang
 dependencies+=' curl dpkg-dev apt-transport-https ca-certificates gnupg software-properties-common'
 # - Python headers for Boost.Python
 dependencies+=' libpython-dev'
@@ -23,51 +27,72 @@ dependencies+=' git'
 # - CMake generators (but not CMake itself)
 dependencies+=' make ninja-build'
 # - compilers
-dependencies+=' gcc-8 g++-8'
+dependencies+=" gcc-${GCC_VERSION} g++-${GCC_VERSION}"
 # - rippled dependencies
-dependencies+=' protobuf-compiler libprotobuf-dev libssl-dev'
+dependencies+=' protobuf-compiler libprotobuf-dev libssl-dev pkg-config'
+# - documentation dependencies
+dependencies+=' flex bison graphviz plantuml'
 apt-get install --yes ${dependencies}
 
-# Give us nice unversioned aliases for gcc-8 and company.
+# Give us nice unversioned aliases for gcc and company.
 update-alternatives --install \
-  /usr/bin/gcc gcc /usr/bin/gcc-8 100 \
-  --slave /usr/bin/g++ g++ /usr/bin/g++-8 \
-  --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-8 \
-  --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-8 \
-  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-8 \
-  --slave /usr/bin/gcov gcov /usr/bin/gcov-8 \
-  --slave /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-dump-8 \
-  --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-tool-8
+  /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 100 \
+  --slave /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} \
+  --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-${GCC_VERSION} \
+  --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-${GCC_VERSION} \
+  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-${GCC_VERSION} \
+  --slave /usr/bin/gcov gcov /usr/bin/gcov-${GCC_VERSION} \
+  --slave /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-dump-${GCC_VERSION} \
+  --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-tool-${GCC_VERSION}
 update-alternatives --auto gcc
 
-# The package `gcc-8` depends on the package `cpp-8`, but the alternative
+# The package `gcc` depends on the package `cpp`, but the alternative
 # `cpp` is a master alternative already, so it must be updated separately.
 update-alternatives --install \
-  /usr/bin/cpp cpp /usr/bin/cpp-8 100
+  /usr/bin/cpp cpp /usr/bin/cpp-${GCC_VERSION} 100
 update-alternatives --auto cpp
 
-# Add source for CMake.
-curl https://apt.kitware.com/keys/kitware-archive-latest.asc | apt-key add -
-apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
 # Add sources for Clang.
+curl --location https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
-deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main
-deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main
+deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${CLANG_VERSION} main
+deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${CLANG_VERSION} main
 EOF
 # Enumerate dependencies.
 dependencies=''
-# - CMake
-dependencies+=' cmake'
-# - clang and clang++
-dependencies+=' clang-7'
-# Install Clang.
+# - clang, clang++, clang-tidy, clang-format
+dependencies+=" clang-${CLANG_VERSION} clang-tidy-${CLANG_VERSION} clang-format-${CLANG_VERSION}"
+# - libclang for Doxygen
+dependencies+=" libclang-${CLANG_VERSION}-dev"
+apt-get update
 apt-get install --yes ${dependencies}
 
-# Give us nice unversioned aliases for clang-7 and company.
+# Give us nice unversioned aliases for clang and company.
 update-alternatives --install \
-  /usr/bin/clang clang /usr/bin/clang-7 100 \
-  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-7
+  /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} 100 \
+  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION}
 update-alternatives --auto clang
+update-alternatives --install \
+  /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} 100
+update-alternatives --auto clang-tidy
+update-alternatives --install \
+  /usr/bin/clang-format clang-format /usr/bin/clang-format-${CLANG_VERSION} 100
+update-alternatives --auto clang-format
+
+# Download and unpack CMake.
+cmake_slug="cmake-${CMAKE_VERSION}"
+curl --location --remote-name \
+  "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${cmake_slug}.tar.gz"
+tar xzf ${cmake_slug}.tar.gz
+rm ${cmake_slug}.tar.gz
+
+# Build and install CMake.
+cd ${cmake_slug}
+./bootstrap --parallel=$(nproc)
+make -j $(nproc)
+make install
+cd ..
+rm --recursive --force ${cmake_slug}
 
 # Download and unpack Boost.
 boost_slug="boost_$(echo ${BOOST_VERSION} | tr . _)"
@@ -83,6 +108,30 @@ cd ${boost_slug}
 ./b2 -j $(nproc) install
 cd ..
 rm --recursive --force ${boost_slug}
+
+# Download and unpack Doxygen.
+doxygen_slug="doxygen-${DOXYGEN_VERSION}"
+curl --location --remote-name \
+  "http://doxygen.nl/files/${doxygen_slug}.src.tar.gz"
+tar xzf ${doxygen_slug}.src.tar.gz
+rm ${doxygen_slug}.src.tar.gz
+
+# Build and install Doxygen
+cd ${doxygen_slug}
+patch -p0 <<EOF
+--- src/CMakeLists.txt
++++ src/CMakeLists.txt
+@@ -313,1 +313,1 @@
+-    llvm_map_components_to_libnames(llvm_libs support core option)
++    llvm_map_components_to_libnames(llvm_libs core option)
+EOF
+mkdir build
+cd build
+cmake -G Ninja -Duse_libclang=ON ..
+cmake --build . --parallel $(nproc)
+cmake --build . --target install
+cd ../..
+rm --recursive --force ${doxygen_slug}
 
 # Clean up.
 apt-get clean

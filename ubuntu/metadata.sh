@@ -13,4 +13,6 @@ set -o xtrace
 apt list --installed
 gcc --version
 clang --version
+cmake --version
 cat /usr/local/include/boost/version.hpp
+doxygen --version
