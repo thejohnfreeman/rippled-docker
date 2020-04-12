@@ -1,4 +1,4 @@
 FROM ubuntu:18.04
-WORKDIR /tmp
+WORKDIR /root
 COPY prepare.sh .
 RUN ./prepare.sh && rm prepare.sh

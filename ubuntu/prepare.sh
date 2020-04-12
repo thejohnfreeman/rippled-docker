@@ -116,7 +116,7 @@ curl --location --remote-name \
 tar xzf ${doxygen_slug}.src.tar.gz
 rm ${doxygen_slug}.src.tar.gz
 
-# Build and install Doxygen
+# Build and install Doxygen.
 cd ${doxygen_slug}
 patch -p0 <<EOF
 --- src/CMakeLists.txt
