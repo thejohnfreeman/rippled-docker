@@ -6,22 +6,27 @@ set -o xtrace
 
 # Parameters
 
-BOOST_VERSION=${BOOST_VERSION:-1.70.0}
-GCC_VERSION=${GCC_VERSION:-8}
-CLANG_VERSION=${CLANG_VERSION:-10}
-CMAKE_VERSION=${CMAKE_VERSION:-3.17.0}
-DOXYGEN_VERSION=${DOXYGEN_VERSION:-1.8.17}
+BOOST_VERSION=${BOOST_VERSION:-1.77.0}
+GCC_VERSION=${GCC_VERSION:-11}
+CLANG_VERSION=${CLANG_VERSION:-13}
+CMAKE_VERSION=${CMAKE_VERSION:-3.21.0}
+DOXYGEN_VERSION=${DOXYGEN_VERSION:-1.9.2}
 
 # Do not add a stanza to this script without explaining why it is here.
 
 apt-get update
+# Non-interactively install tzdata.
+# https://stackoverflow.com/a/44333806/618906
+DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends tzdata
 # Iteratively build the list of packages to install so that we can interleave
 # the lines with comments explaining their inclusion.
 dependencies=''
+# - for identifying the Ubuntu version
+dependencies+=' lsb-release'
 # - for adding apt sources for Clang
 dependencies+=' curl dpkg-dev apt-transport-https ca-certificates gnupg software-properties-common'
 # - Python headers for Boost.Python
-dependencies+=' libpython-dev'
+dependencies+=' python-dev'
 # - for downloading rippled and submodules
 dependencies+=' git'
 # - CMake generators (but not CMake itself)
@@ -33,6 +38,8 @@ dependencies+=' protobuf-compiler libprotobuf-dev libssl-dev pkg-config'
 # - documentation dependencies
 dependencies+=' flex bison graphviz plantuml'
 apt-get install --yes ${dependencies}
+
+UBUNTU_CODENAME=$(lsb_release --short --codename)
 
 # Give us nice unversioned aliases for gcc and company.
 update-alternatives --install \
@@ -55,8 +62,8 @@ update-alternatives --auto cpp
 # Add sources for Clang.
 curl --location https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
-deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${CLANG_VERSION} main
-deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-${CLANG_VERSION} main
+deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-${CLANG_VERSION} main
+deb-src http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-${CLANG_VERSION} main
 EOF
 # Enumerate dependencies.
 dependencies=''
@@ -97,7 +104,7 @@ rm --recursive --force ${cmake_slug}
 # Download and unpack Boost.
 boost_slug="boost_$(echo ${BOOST_VERSION} | tr . _)"
 curl --location --remote-name \
-  "https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${boost_slug}.tar.gz"
+  "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/${boost_slug}.tar.gz"
 tar xzf ${boost_slug}.tar.gz
 rm ${boost_slug}.tar.gz
 
@@ -118,13 +125,6 @@ rm ${doxygen_slug}.src.tar.gz
 
 # Build and install Doxygen.
 cd ${doxygen_slug}
-patch -p0 <<EOF
---- src/CMakeLists.txt
-+++ src/CMakeLists.txt
-@@ -313,1 +313,1 @@
--    llvm_map_components_to_libnames(llvm_libs support core option)
-+    llvm_map_components_to_libnames(llvm_libs core option)
-EOF
 mkdir build
 cd build
 cmake -G Ninja -Duse_libclang=ON ..
