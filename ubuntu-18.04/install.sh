@@ -14,8 +14,6 @@ apt update
 # Iteratively build the list of packages to install so that we can interleave
 # the lines with comments explaining their inclusion.
 dependencies=''
-# - to identify the Ubuntu version
-dependencies+=' lsb-release'
 # - for add-apt-repository
 dependencies+=' software-properties-common'
 # - to download CMake
@@ -69,5 +67,9 @@ conan profile new --detect gcc
 conan profile update settings.compiler=gcc gcc
 conan profile update settings.compiler.version=${gcc_version} gcc
 conan profile update settings.compiler.libcxx=libstdc++11 gcc
+conan profile update settings.compiler.cppstd=20 gcc
 conan profile update env.CC=/usr/bin/gcc gcc
 conan profile update env.CXX=/usr/bin/g++ gcc
+
+# Clean up.
+apt clean

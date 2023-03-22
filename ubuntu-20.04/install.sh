@@ -15,34 +15,34 @@ conan_version=${CONAN_VERSION:-1.58}
 
 # Do not add a stanza to this script without explaining why it is here.
 
-apt-get update
+apt update
 # Non-interactively install tzdata.
 # https://stackoverflow.com/a/44333806/618906
-DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends tzdata
+DEBIAN_FRONTEND=noninteractive apt install --yes --no-install-recommends tzdata
 # Iteratively build the list of packages to install so that we can interleave
 # the lines with comments explaining their inclusion.
 dependencies=''
-# - for identifying the Ubuntu version
+# - to identify the Ubuntu version
 dependencies+=' lsb-release'
-# - for adding apt sources for Clang
-dependencies+=' curl dpkg-dev apt-transport-https ca-certificates gnupg software-properties-common'
+# - for add-apt-repository
+dependencies+=' software-properties-common'
+# - to download CMake
+dependencies+=' curl'
+# - to build CMake
+dependencies+=' libssl-dev'
 # - Python headers for Boost.Python
 dependencies+=' python3-dev'
-# - for installing Conan
+# - to install Conan
 dependencies+=' python3-pip'
-# - for downloading rippled
+# - to download rippled
 dependencies+=' git'
 # - CMake generators (but not CMake itself)
 dependencies+=' make ninja-build'
 # - compilers
 dependencies+=" gcc-${gcc_version} g++-${gcc_version}"
-# - rippled dependencies
-dependencies+=' protobuf-compiler libprotobuf-dev libssl-dev pkg-config'
 # - documentation dependencies
 dependencies+=' flex bison graphviz plantuml'
-apt-get install --yes ${dependencies}
-
-ubuntu_codename=$(lsb_release --short --codename)
+apt install --yes ${dependencies}
 
 # Give us nice unversioned aliases for gcc and company.
 update-alternatives --install \
@@ -62,6 +62,8 @@ update-alternatives --install \
   /usr/bin/cpp cpp /usr/bin/cpp-${gcc_version} 100
 update-alternatives --auto cpp
 
+ubuntu_codename=$(lsb_release --short --codename)
+
 # Add sources for Clang.
 curl --location https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
@@ -74,8 +76,8 @@ dependencies=''
 dependencies+=" clang-${clang_version} clang-tidy-${clang_version} clang-format-${clang_version}"
 # - libclang for Doxygen
 dependencies+=" libclang-${clang_version}-dev"
-apt-get update
-apt-get install --yes ${dependencies}
+apt update
+apt install --yes ${dependencies}
 
 # Give us nice unversioned aliases for clang and company.
 update-alternatives --install \
@@ -128,6 +130,7 @@ conan profile new --detect gcc
 conan profile update settings.compiler=gcc gcc
 conan profile update settings.compiler.version=${gcc_version} gcc
 conan profile update settings.compiler.libcxx=libstdc++11 gcc
+conan profile update settings.compiler.cppstd=20 gcc
 conan profile update env.CC=/usr/bin/gcc gcc
 conan profile update env.CXX=/usr/bin/g++ gcc
 
@@ -135,8 +138,9 @@ conan profile new --detect clang
 conan profile update settings.compiler=clang clang
 conan profile update settings.compiler.version=${clang_version} clang
 conan profile update settings.compiler.libcxx=libstdc++11 clang
+conan profile update settings.compiler.cppstd=20 clang
 conan profile update env.CC=/usr/bin/clang clang
 conan profile update env.CXX=/usr/bin/clang++ clang
 
 # Clean up.
-apt-get clean
+apt clean
