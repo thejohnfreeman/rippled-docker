@@ -27,7 +27,7 @@ conan profile update 'conf.tools.build:cxxflags=["-DBOOST_ASIO_HAS_STD_INVOKE_RE
 # These settings are not necessary for static builds,
 # which is all we're doing for now,
 # but we can leave them commented here in case they are needed later.
-function() {
+function ignored() {
 conan profile update "env.LDFLAGS=${ldflags}" default
 # Conan does not have tools.build:ldflags.
 linkflags=$(echo ${ldflags} | sed -E 's/[[:space:]]+/", "/g')
@@ -35,7 +35,7 @@ conan profile update "conf.tools.build:sharedlinkflags=['${linkflags}']"
 conan profile update "conf.tools.build:exelinkflags=['${linkflags}']"
 }
 
-dir=$(mktemp --directory)
+dir=$(mktemp -d)
 pushd ${dir}
 git clone https://github.com/XRPLF/rippled.git --branch develop --depth 1 .
 conan export external/snappy snappy/1.1.9@
