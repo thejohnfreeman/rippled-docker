@@ -6,11 +6,11 @@ set -o xtrace
 
 # Parameters
 
-BOOST_VERSION=${BOOST_VERSION:-1.77.0}
-GCC_VERSION=${GCC_VERSION:-11}
-CLANG_VERSION=${CLANG_VERSION:-13}
-CMAKE_VERSION=${CMAKE_VERSION:-3.21.0}
-DOXYGEN_VERSION=${DOXYGEN_VERSION:-1.9.2}
+boost_version=${BOOST_VERSION:-1.77.0}
+gcc_version=${GCC_VERSION:-11}
+clang_version=${CLANG_VERSION:-13}
+cmake_version=${CMAKE_VERSION:-3.21.0}
+doxygen_version=${DOXYGEN_VERSION:-1.9.2}
 
 # Do not add a stanza to this script without explaining why it is here.
 
@@ -32,64 +32,64 @@ dependencies+=' git'
 # - CMake generators (but not CMake itself)
 dependencies+=' make ninja-build'
 # - compilers
-dependencies+=" gcc-${GCC_VERSION} g++-${GCC_VERSION}"
+dependencies+=" gcc-${gcc_version} g++-${gcc_version}"
 # - rippled dependencies
 dependencies+=' protobuf-compiler libprotobuf-dev libssl-dev pkg-config'
 # - documentation dependencies
 dependencies+=' flex bison graphviz plantuml'
 apt-get install --yes ${dependencies}
 
-UBUNTU_CODENAME=$(lsb_release --short --codename)
+ubuntu_codename=$(lsb_release --short --codename)
 
 # Give us nice unversioned aliases for gcc and company.
 update-alternatives --install \
-  /usr/bin/gcc gcc /usr/bin/gcc-${GCC_VERSION} 100 \
-  --slave /usr/bin/g++ g++ /usr/bin/g++-${GCC_VERSION} \
-  --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-${GCC_VERSION} \
-  --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-${GCC_VERSION} \
-  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-${GCC_VERSION} \
-  --slave /usr/bin/gcov gcov /usr/bin/gcov-${GCC_VERSION} \
-  --slave /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-dump-${GCC_VERSION} \
-  --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-tool-${GCC_VERSION}
+  /usr/bin/gcc gcc /usr/bin/gcc-${gcc_version} 100 \
+  --slave /usr/bin/g++ g++ /usr/bin/g++-${gcc_version} \
+  --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-${gcc_version} \
+  --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-${gcc_version} \
+  --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-${gcc_version} \
+  --slave /usr/bin/gcov gcov /usr/bin/gcov-${gcc_version} \
+  --slave /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-dump-${gcc_version} \
+  --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-tool-${gcc_version}
 update-alternatives --auto gcc
 
 # The package `gcc` depends on the package `cpp`, but the alternative
 # `cpp` is a master alternative already, so it must be updated separately.
 update-alternatives --install \
-  /usr/bin/cpp cpp /usr/bin/cpp-${GCC_VERSION} 100
+  /usr/bin/cpp cpp /usr/bin/cpp-${gcc_version} 100
 update-alternatives --auto cpp
 
 # Add sources for Clang.
 curl --location https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
-deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-${CLANG_VERSION} main
-deb-src http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-${CLANG_VERSION} main
+deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
+deb-src http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
 EOF
 # Enumerate dependencies.
 dependencies=''
 # - clang, clang++, clang-tidy, clang-format
-dependencies+=" clang-${CLANG_VERSION} clang-tidy-${CLANG_VERSION} clang-format-${CLANG_VERSION}"
+dependencies+=" clang-${clang_version} clang-tidy-${clang_version} clang-format-${clang_version}"
 # - libclang for Doxygen
-dependencies+=" libclang-${CLANG_VERSION}-dev"
+dependencies+=" libclang-${clang_version}-dev"
 apt-get update
 apt-get install --yes ${dependencies}
 
 # Give us nice unversioned aliases for clang and company.
 update-alternatives --install \
-  /usr/bin/clang clang /usr/bin/clang-${CLANG_VERSION} 100 \
-  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_VERSION}
+  /usr/bin/clang clang /usr/bin/clang-${clang_version} 100 \
+  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version}
 update-alternatives --auto clang
 update-alternatives --install \
-  /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${CLANG_VERSION} 100
+  /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${clang_version} 100
 update-alternatives --auto clang-tidy
 update-alternatives --install \
-  /usr/bin/clang-format clang-format /usr/bin/clang-format-${CLANG_VERSION} 100
+  /usr/bin/clang-format clang-format /usr/bin/clang-format-${clang_version} 100
 update-alternatives --auto clang-format
 
 # Download and unpack CMake.
-cmake_slug="cmake-${CMAKE_VERSION}"
+cmake_slug="cmake-${cmake_version}"
 curl --location --remote-name \
-  "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${cmake_slug}.tar.gz"
+  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_slug}.tar.gz"
 tar xzf ${cmake_slug}.tar.gz
 rm ${cmake_slug}.tar.gz
 
@@ -102,9 +102,9 @@ cd ..
 rm --recursive --force ${cmake_slug}
 
 # Download and unpack Boost.
-boost_slug="boost_$(echo ${BOOST_VERSION} | tr . _)"
+boost_slug="boost_$(echo ${boost_version} | tr . _)"
 curl --location --remote-name \
-  "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/${boost_slug}.tar.gz"
+  "https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/${boost_slug}.tar.gz"
 tar xzf ${boost_slug}.tar.gz
 rm ${boost_slug}.tar.gz
 
@@ -117,7 +117,7 @@ cd ..
 rm --recursive --force ${boost_slug}
 
 # Download and unpack Doxygen.
-doxygen_slug="doxygen-${DOXYGEN_VERSION}"
+doxygen_slug="doxygen-${doxygen_version}"
 curl --location --remote-name \
   "http://doxygen.nl/files/${doxygen_slug}.src.tar.gz"
 tar xzf ${doxygen_slug}.src.tar.gz
