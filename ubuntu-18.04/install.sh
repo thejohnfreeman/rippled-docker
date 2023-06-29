@@ -8,6 +8,7 @@ set -o xtrace
 
 gcc_version=${GCC_VERSION:-10}
 cmake_version=${CMAKE_VERSION:-3.25.1}
+cmake_sha256=1c511d09516af493694ed9baf13c55947a36389674d657a2d5e0ccedc6b291d8
 conan_version=${CONAN_VERSION:-1.59}
 
 apt update
@@ -47,10 +48,12 @@ update-alternatives --auto gcc
 
 # Download and unpack CMake.
 cmake_slug="cmake-${cmake_version}"
+cmake_archive="${cmake_slug}.tar.gz"
 curl --location --remote-name \
-  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_slug}.tar.gz"
-tar xzf ${cmake_slug}.tar.gz
-rm ${cmake_slug}.tar.gz
+  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_archive}"
+echo "${cmake_sha256}  ${cmake_archive}" | sha256sum --check
+tar -xzf ${cmake_archive}
+rm ${cmake_archive}
 
 # Build and install CMake.
 cd ${cmake_slug}

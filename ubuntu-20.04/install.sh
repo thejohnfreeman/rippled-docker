@@ -10,7 +10,9 @@ set -o xtrace
 gcc_version=${GCC_VERSION:-10}
 clang_version=${CLANG_VERSION:-14}
 cmake_version=${CMAKE_VERSION:-3.25.1}
+cmake_sha256=1c511d09516af493694ed9baf13c55947a36389674d657a2d5e0ccedc6b291d8
 doxygen_version=${DOXYGEN_VERSION:-1.9.5}
+doxygen_md5=1edb77277a84cf07972ffcd60acb8c1d
 conan_version=${CONAN_VERSION:-1.58}
 
 # Do not add a stanza to this script without explaining why it is here.
@@ -67,8 +69,8 @@ ubuntu_codename=$(lsb_release --short --codename)
 # Add sources for Clang.
 curl --location https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
-deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
-deb-src http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
+deb https://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
+deb-src https://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
 EOF
 # Enumerate dependencies.
 dependencies=''
@@ -93,10 +95,12 @@ update-alternatives --auto clang-format
 
 # Download and unpack CMake.
 cmake_slug="cmake-${cmake_version}"
+cmake_archive="${cmake_slug}.tar.gz"
 curl --location --remote-name \
-  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_slug}.tar.gz"
-tar xzf ${cmake_slug}.tar.gz
-rm ${cmake_slug}.tar.gz
+  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_archive}"
+echo "${cmake_sha256}  ${cmake_archive}" | sha256sum --check
+tar -xzf ${cmake_archive}
+rm ${cmake_archive}
 
 # Build and install CMake.
 cd ${cmake_slug}
@@ -108,10 +112,12 @@ rm --recursive --force ${cmake_slug}
 
 # Download and unpack Doxygen.
 doxygen_slug="doxygen-${doxygen_version}"
+doxygen_archive="${doxygen_slug}.src.tar.gz"
 curl --location --remote-name \
-  "http://doxygen.nl/files/${doxygen_slug}.src.tar.gz"
-tar xzf ${doxygen_slug}.src.tar.gz
-rm ${doxygen_slug}.src.tar.gz
+  "https://doxygen.nl/files/${doxygen_archive}"
+echo "${doxygen_md5}  ${doxygen_archive}" | md5sum --check
+tar -xzf ${doxygen_archive}
+rm ${doxygen_archive}
 
 # Build and install Doxygen.
 cd ${doxygen_slug}

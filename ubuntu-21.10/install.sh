@@ -7,10 +7,13 @@ set -o xtrace
 # Parameters
 
 boost_version=${BOOST_VERSION:-1.77.0}
+boost_sha256=5347464af5b14ac54bb945dc68f1dd7c56f0dad7262816b956138fc53bcc0131
 gcc_version=${GCC_VERSION:-11}
 clang_version=${CLANG_VERSION:-13}
 cmake_version=${CMAKE_VERSION:-3.21.0}
+cmake_sha256=4a42d56449a51f4d3809ab4d3b61fd4a96a469e56266e896ce1009b5768bd2ab
 doxygen_version=${DOXYGEN_VERSION:-1.9.2}
+doxygen_md5=84c0522bb65d17f9127896268b72ea2a
 
 # Do not add a stanza to this script without explaining why it is here.
 
@@ -62,8 +65,8 @@ update-alternatives --auto cpp
 # Add sources for Clang.
 curl --location https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 cat <<EOF >/etc/apt/sources.list.d/llvm.list
-deb http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
-deb-src http://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
+deb https://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
+deb-src https://apt.llvm.org/${ubuntu_codename}/ llvm-toolchain-${ubuntu_codename}-${clang_version} main
 EOF
 # Enumerate dependencies.
 dependencies=''
@@ -88,10 +91,12 @@ update-alternatives --auto clang-format
 
 # Download and unpack CMake.
 cmake_slug="cmake-${cmake_version}"
+cmake_archive="${cmake_slug}.tar.gz"
 curl --location --remote-name \
-  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_slug}.tar.gz"
-tar xzf ${cmake_slug}.tar.gz
-rm ${cmake_slug}.tar.gz
+  "https://github.com/Kitware/CMake/releases/download/v${cmake_version}/${cmake_archive}"
+echo "${cmake_sha256}  ${cmake_archive}" | sha256sum --check
+tar -xzf ${cmake_archive}
+rm ${cmake_archive}
 
 # Build and install CMake.
 cd ${cmake_slug}
@@ -103,10 +108,12 @@ rm --recursive --force ${cmake_slug}
 
 # Download and unpack Boost.
 boost_slug="boost_$(echo ${boost_version} | tr . _)"
+boost_archive="${boost_slug}.tar.gz"
 curl --location --remote-name \
-  "https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/${boost_slug}.tar.gz"
-tar xzf ${boost_slug}.tar.gz
-rm ${boost_slug}.tar.gz
+  "https://boostorg.jfrog.io/artifactory/main/release/${boost_version}/source/${boost_archive}"
+echo "${boost_sha256}  ${boost_archive}" | sha256sum --check
+tar -xzf ${boost_archive}
+rm ${boost_archive}
 
 # Build and install Boost.
 cd ${boost_slug}
@@ -118,10 +125,12 @@ rm --recursive --force ${boost_slug}
 
 # Download and unpack Doxygen.
 doxygen_slug="doxygen-${doxygen_version}"
+doxygen_archive="${doxygen_slug}.src.tar.gz"
 curl --location --remote-name \
-  "http://doxygen.nl/files/${doxygen_slug}.src.tar.gz"
-tar xzf ${doxygen_slug}.src.tar.gz
-rm ${doxygen_slug}.src.tar.gz
+  "https://doxygen.nl/files/${doxygen_archive}"
+echo "${doxygen_md5}  ${doxygen_archive}" | md5sum --check
+tar -xzf ${doxygen_archive}
+rm ${doxygen_archive}
 
 # Build and install Doxygen.
 cd ${doxygen_slug}
