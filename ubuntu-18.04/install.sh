@@ -6,10 +6,10 @@ set -o xtrace
 
 # Parameters
 
-gcc_version=${GCC_VERSION:-10}
+gcc_version=${GCC_VERSION:-11}
 cmake_version=${CMAKE_VERSION:-3.25.1}
 cmake_sha256=1c511d09516af493694ed9baf13c55947a36389674d657a2d5e0ccedc6b291d8
-conan_version=${CONAN_VERSION:-1.59}
+conan_version=${CONAN_VERSION:-1.60}
 
 apt update
 # Iteratively build the list of packages to install so that we can interleave
@@ -21,10 +21,8 @@ dependencies+=' software-properties-common'
 dependencies+=' curl'
 # - to build CMake
 dependencies+=' libssl-dev'
-# - Python headers for Boost.Python
-dependencies+=' python3-dev'
-# - to install Conan
-dependencies+=' python3-pip'
+# - for Python
+dependencies+=' libbz2-dev liblzma-dev libsqlite3-dev'
 # - to download rippled
 dependencies+=' git'
 # - CMake generators (but not CMake itself)
@@ -46,6 +44,13 @@ update-alternatives --install \
   --slave /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-tool-${gcc_version}
 update-alternatives --auto gcc
 
+curl https://pyenv.run | bash
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+pyenv install 3.10-dev
+pyenv global 3.10-dev
+
 # Download and unpack CMake.
 cmake_slug="cmake-${cmake_version}"
 cmake_archive="${cmake_slug}.tar.gz"
@@ -64,7 +69,8 @@ cd ..
 rm --recursive --force ${cmake_slug}
 
 # Install Conan.
-pip3 install conan==${conan_version}
+pip install --upgrade pip
+pip install conan==${conan_version}
 
 conan profile new --detect gcc
 conan profile update settings.compiler=gcc gcc
