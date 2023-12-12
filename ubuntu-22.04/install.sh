@@ -13,6 +13,7 @@ cmake_sha256=1c511d09516af493694ed9baf13c55947a36389674d657a2d5e0ccedc6b291d8
 doxygen_version=${DOXYGEN_VERSION:-1.9.5}
 doxygen_md5=1edb77277a84cf07972ffcd60acb8c1d
 conan_version=${CONAN_VERSION:-1.58}
+gcovr_version=${GCOVR_VERSION:-6.0}
 
 # Do not add a stanza to this script without explaining why it is here.
 
@@ -145,6 +146,8 @@ conan profile update settings.compiler.libcxx=libstdc++11 clang
 conan profile update settings.compiler.cppstd=20 clang
 conan profile update env.CC=/usr/bin/clang clang
 conan profile update env.CXX=/usr/bin/clang++ clang
+
+pip3 --no-cache-dir install gcovr==${gcovr_version}
 
 # Clean up.
 apt clean

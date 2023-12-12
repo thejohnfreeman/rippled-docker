@@ -16,3 +16,4 @@ clang --version
 cmake --version
 doxygen --version
 conan --version
+gcovr --version
