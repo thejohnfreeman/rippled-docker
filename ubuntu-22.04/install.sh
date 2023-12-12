@@ -127,7 +127,7 @@ cd ../..
 rm --recursive --force ${doxygen_slug}
 
 # Install Conan.
-pip3 install conan==${conan_version}
+pip3 --no-cache-dir install conan==${conan_version}
 
 conan profile new --detect gcc
 conan profile update settings.compiler=gcc gcc
