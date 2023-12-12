@@ -81,7 +81,8 @@ apt install --yes ${dependencies}
 # Give us nice unversioned aliases for clang and company.
 update-alternatives --install \
   /usr/bin/clang clang /usr/bin/clang-${clang_version} 100 \
-  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version}
+  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version} \
+  --slave /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${clang_version}
 update-alternatives --auto clang
 update-alternatives --install \
   /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${clang_version} 100
