@@ -13,6 +13,7 @@ cmake_sha256=1c511d09516af493694ed9baf13c55947a36389674d657a2d5e0ccedc6b291d8
 doxygen_version=${DOXYGEN_VERSION:-1.9.5}
 doxygen_md5=1edb77277a84cf07972ffcd60acb8c1d
 conan_version=${CONAN_VERSION:-1.58}
+gcovr_version=${GCOVR_VERSION:-6.0}
 
 # Do not add a stanza to this script without explaining why it is here.
 
@@ -81,7 +82,8 @@ apt install --yes ${dependencies}
 # Give us nice unversioned aliases for clang and company.
 update-alternatives --install \
   /usr/bin/clang clang /usr/bin/clang-${clang_version} 100 \
-  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version}
+  --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version} \
+  --slave /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-${clang_version}
 update-alternatives --auto clang
 update-alternatives --install \
   /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${clang_version} 100
@@ -127,7 +129,7 @@ cd ../..
 rm --recursive --force ${doxygen_slug}
 
 # Install Conan.
-pip3 install conan==${conan_version}
+pip3 --no-cache-dir install conan==${conan_version}
 
 conan profile new --detect gcc
 conan profile update settings.compiler=gcc gcc
@@ -144,6 +146,8 @@ conan profile update settings.compiler.libcxx=libstdc++11 clang
 conan profile update settings.compiler.cppstd=20 clang
 conan profile update env.CC=/usr/bin/clang clang
 conan profile update env.CXX=/usr/bin/clang++ clang
+
+pip3 --no-cache-dir install gcovr==${gcovr_version}
 
 # Clean up.
 apt clean
